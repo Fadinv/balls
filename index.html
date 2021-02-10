@@ -140,9 +140,9 @@
 </head>
 <body>
 <div id="top">
-    <div>Пропущено: <span id="missed">0</span></div>
+    <div>Пропущено: <span id="missed"></span></div>
     <div>Таймер: <span id="time"></span></div>
-    <div>Лопнуто: <span id="burst">0</span></div>
+    <div>Лопнуто: <span id="burst"></span></div>
 </div>
 
 <div id="place">
@@ -272,15 +272,17 @@
 
         // cd - call-down появления шариков
         let cdBall = 2
-        const cdBallStep = .25
+        const cdBallStep = .5
 
         // коэффициент скорости
         let speed = .5
-        const speedStep = .1
+        const speedStep = .15
 
         // наши счетчики
         let burstCounter = 0
+        burst.innerHTML = burstCounter.toString()
         let missedCounter = 0
+        missed.innerHTML = missedCounter.toString()
 
         // ballStep - сколько нужно создать шариков, чтобы увеличить скорость и уменьшить cd появления шариков
         const ballStep = 6
