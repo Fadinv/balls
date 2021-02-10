@@ -1,0 +1,496 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        :root {
+            font-size: calc(1.2vh + 1.2vw);
+            min-height: 100vh;
+            max-height: 100vh;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        #top {
+            width: 100%;
+            height: 6vh;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            background-color: rgba(23, 20, 20, .7);
+            border: 1px solid black;
+            color: white
+        }
+
+        #top > div {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #top > div > span {
+            margin-left: .25em;
+        }
+
+        #place {
+            position: relative;
+            overflow: hidden;
+            height: 94vh;
+            background-color: rgba(23, 20, 20, .3);
+        }
+
+        #needle {
+            position: absolute;
+            display: flex;
+            flex-direction: row;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        #needle > svg {
+            position: absolute;
+            transition: opacity .3s ease-in;
+            top: 0;
+            left: calc(50% - 1.5vh);
+            height: 6vh;
+            width: 3vh;
+            cursor: pointer;
+        }
+
+        .ball {
+            position: absolute;
+            transition: opacity .3s ease-in;
+            top: 100%;
+            width: 10vw;
+            height: 10vw;
+        }
+
+        .red > svg {
+            fill: #a4161a
+        }
+
+        .black > svg {
+            fill: #463f3a
+        }
+
+        .green > svg {
+            fill: #2c6e49;
+        }
+
+        .pink > svg {
+            fill: #720026;
+        }
+
+        .blue > svg {
+            fill: #1a535c
+        }
+
+        .the-end {
+            opacity: 0;
+        }
+
+        #results {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            transition: all .3s ease-out;
+        }
+
+        #results > button {
+            font-size: 1rem;
+            cursor: pointer;
+            color: aliceblue;
+            background-color: rgba(50, 30, 40, .7);
+            padding: .5em 1em;
+            border: none;
+            border-radius: .5em;
+            outline: none;
+        }
+
+        #results > button:hover {
+            border: 3px solid coral;
+        }
+
+    </style>
+</head>
+<body>
+<div id="top">
+    <div>Пропущено: <span id="missed">0</span></div>
+    <div>Таймер: <span id="time"></span></div>
+    <div>Лопнуто: <span id="burst">0</span></div>
+</div>
+
+<div id="place">
+    <div id="results">
+        <button id="new-game-button">Начать заного</button>
+    </div>
+
+    <div id="needle">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 238.92 512">
+            <defs>
+                <style>.cls-1 {
+                    fill: #d8d7da;
+                }
+
+                .cls-2 {
+                    fill: #ff5d5d;
+                }</style>
+            </defs>
+            <polyline class="cls-1" points="99.42 227.07 99.42 418.38 119.42 501.98 139.5 421.76 139.5 227.07"/>
+            <circle class="cls-2" cx="119.46" cy="119.46" r="109.44"/>
+            <path d="M375.46,119.46A119.46,119.46,0,1,0,225.94,235.09V418.38a9.59,9.59,0,0,0,.28,2.33l20,83.6a10,10,0,0,0,9.7,7.69H256a10,10,0,0,0,9.72-7.59l20.08-80.22a9.92,9.92,0,0,0,.3-2.43V235.09A119.68,119.68,0,0,0,375.46,119.46ZM266,420.52l-9.84,39.32L246,417.2V238.49c3.3.28,6.65.43,10,.43s6.71-.15,10-.43ZM256,218.88a99.42,99.42,0,1,1,99.42-99.42A99.53,99.53,0,0,1,256,218.88Z"
+                  transform="translate(-136.54)"/>
+            <path d="M256,39.58a80,80,0,0,0-79.88,79.88,10,10,0,0,0,20,0A59.9,59.9,0,0,1,256,59.62a10,10,0,0,0,0-20Z"
+                  transform="translate(-136.54)"/>
+            <path d="M186.24,136.77H186a10,10,0,1,0,0,20h.2a10,10,0,0,0,0-20Z" transform="translate(-136.54)"/>
+        </svg>
+    </div>
+</div>
+</body>
+
+<script>
+
+    const newGame = () => {
+        const results = document.getElementById('results')
+        const button = document.getElementById('new-game-button')
+
+        button.removeEventListener('click', newGame)
+
+        results.style.opacity = '0'
+
+        setTimeout(() => {
+            results.style.zIndex = '-1'
+            main()
+        }, 300)
+    }
+
+    const main = () => {
+
+        // Основной контейнер
+        const place = document.getElementById('place')
+
+        // Одна svg для всех шариков
+        const strSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 328.95 512"><path d="M271.74,386.6a23.38,23.38,0,0,0,23.33-22.26c33.39-11.23,64.47-36.68,88.08-72.27,23.72-35.76,37.33-78.45,37.33-117.12,0-43.81-17.48-88-48-121.3C340.86,19.06,299.47,0,256,0S171.14,19.06,139.47,53.65C109,86.93,91.53,131.14,91.53,175c0,38.67,13.6,81.36,37.32,117.12,23.61,35.59,54.69,61,88.09,72.27a23.31,23.31,0,0,0,31.46,20.78v22.5a56.06,56.06,0,0,0,56,56,40.83,40.83,0,0,1,40.78,40.79V512h15.21v-7.6a56.06,56.06,0,0,0-56-56,40.83,40.83,0,0,1-40.79-40.78v-22.5A23.18,23.18,0,0,0,271.74,386.6Zm-8.14-23.35v-7.6H248.4v7.6a8.14,8.14,0,0,1-16.28,0,8.36,8.36,0,0,1,.32-2.24l2.1-7.34-7.35-2.07c-32.21-9.08-62.63-33.21-85.67-67.94-22.11-33.33-34.79-73-34.79-108.71,0-40,16-80.52,44-111C179.45,32.51,216.85,15.21,256,15.21s76.55,17.3,105.32,48.71c27.93,30.51,43.95,71,43.95,111,0,35.76-12.68,75.38-34.79,108.71-23,34.73-53.46,58.86-85.68,67.94l-7.35,2.07,2.1,7.34a8,8,0,0,1,.33,2.24,8.14,8.14,0,0,1-16.28,0Z" transform="translate(-91.53)"/><path d="M378.85,119.48l-14.07,5.79A131.66,131.66,0,0,1,374.85,175h15.21A147.17,147.17,0,0,0,378.85,119.48Z" transform="translate(-91.53)"/><path d="M350.1,74.19C324.25,46,290.83,30.42,256,30.42V45.63c30.52,0,59.95,13.79,82.88,38.83A138.54,138.54,0,0,1,356.22,108l13.12-7.68A153.67,153.67,0,0,0,350.1,74.19Z" transform="translate(-91.53)"/></svg>'
+
+        // Контейнеры состояния
+        const time = document.getElementById('time')
+        const burst = document.getElementById('burst')
+        const missed = document.getElementById('missed')
+
+
+        // needleDiv - div - который занимает всю ширину экрана
+        // needle - сама svg
+        const needleDiv = document.getElementById('needle')
+        const needle = needleDiv.firstElementChild
+
+        // (для повторного запуска)
+        needle.classList.remove('the-end')
+
+        /* needleDivWidth - значение ширины needleDiv в пикселях (можно считать за ширину экрана)
+        criticalPoint - критическая точка(наконечника иглы по оси X)
+        shiftX - отступ при drag-n-drop */
+        let needleDivWidth = needleDiv.getBoundingClientRect().width
+        let criticalPoint = 100 * (needle.getBoundingClientRect().left + needle.getBoundingClientRect().width / 2) / needleDivWidth
+        let shiftX
+
+        // Положение иголки при движении
+        const needleMove = (e) => {
+            const needlePos = needle.getBoundingClientRect()
+
+            let clientX
+
+            if (e.clientX) clientX = e.clientX
+            else if (e.touches[0].clientX) clientX = e.touches[0].clientX
+
+            if (clientX - shiftX + needlePos.width >= needleDivWidth) return
+
+            let newLeft = (100 * (clientX - shiftX)) / needleDivWidth
+            if (newLeft < 0) newLeft = 0
+
+            needle.style.left = newLeft + '%'
+            criticalPoint = newLeft + (100 * needlePos.width / 2) / needleDivWidth
+        }
+
+        // сбрасываем все глобальные события движения
+        const needleRemove = () => {
+            document.removeEventListener('mousemove', needleMove)
+            document.removeEventListener('touchmove', needleMove)
+            document.removeEventListener('mouseup', needleRemove)
+            document.removeEventListener('touchend', needleRemove)
+        }
+
+        // При клике накидываем глобавльные обработчики
+        const needleMoveStart = (e) => {
+            needleDivWidth = needleDiv.getBoundingClientRect().width
+
+            const needlePos = needle.getBoundingClientRect()
+
+            let clientX
+
+            if (e.clientX) clientX = e.clientX
+            else if (e.touches[0].clientX) clientX = e.touches[0].clientX
+
+            shiftX = clientX - needlePos.left
+
+            document.addEventListener('mousemove', needleMove)
+            document.addEventListener('touchmove', needleMove)
+            document.addEventListener('mouseup', needleRemove)
+            document.addEventListener('touchend', needleRemove)
+        }
+
+        needle.onmousedown = needleMoveStart
+        needle.ontouchstart = needleMoveStart
+
+
+        // В массив закидываем все активные шарики
+        let balls = []
+
+        // cd - call-down появления шариков
+        let cdBall = 2
+        const cdBallStep = .25
+
+        // коэффициент скорости
+        let speed = .5
+        const speedStep = .1
+
+        // наши счетчики
+        let burstCounter = 0
+        let missedCounter = 0
+
+        // ballStep - сколько нужно создать шариков, чтобы увеличить скорость и уменьшить cd появления шариков
+        const ballStep = 6
+        let createdBallsCounter = 0
+
+        // исходный счетчик
+        let sec = 60
+        time.innerHTML = sec.toString()
+
+
+        // Рандомный ветер (скорость и направление)
+        const getRandomWind = () => {
+            const speed = Math.round(Math.random() * 29) + 1
+
+            const direction = (function () {
+                const r = Math.random()
+
+                if (r < .5) return 'from-left'
+                else return 'from-right'
+            })()
+
+            return {
+                speed,
+                direction
+            }
+        }
+
+        let wind = getRandomWind()
+
+        // Чтобы начать с начала
+        const timeIsOver = () => {
+            const results = document.getElementById('results')
+            const button = document.getElementById('new-game-button')
+
+            button.addEventListener('click', newGame)
+
+            results.style.zIndex = '1'
+
+
+            setTimeout(() => {
+                results.style.opacity = '1'
+            }, 300)
+        }
+
+        // рекурсивный setTimeout на счетчике
+        const timer = () => {
+
+            sec--
+
+            time.innerText = sec.toString()
+
+            if (sec === 0) {
+                balls.forEach((b) => {
+                    b.style.transition = 'top 4s linear'
+                    b.style.top = '-50%'
+                    b.classList.toggle('up')
+                })
+
+                needle.classList.toggle('the-end')
+
+                setTimeout(timeIsOver, 3000)
+
+                return
+            }
+
+            setTimeout(() => {
+                timer()
+            }, 1000)
+        }
+
+        // true - если шарик лопается
+        const checkBall = (b) => {
+
+            const top = +b.style.top.slice(0, b.style.top.indexOf('%'))
+            if (top > 6.5 || top < 6.5 - speed) return false
+
+            const width = +b.style.width.slice(0, b.style.width.indexOf('vw'))
+            const left = +b.style.left.slice(0, b.style.left.indexOf('%'))
+
+            if (criticalPoint > left && criticalPoint < left + width) return true
+
+            return false
+        }
+
+
+        // рекурсивный setTimeout, для анимации (шаг 20мс)
+        const animate = () => {
+
+            if (sec === 0) return
+
+            balls.forEach((b) => {
+                const top = +b.style.top.slice(0, b.style.top.indexOf('%'))
+                const left = +b.style.left.slice(0, b.style.left.indexOf('%'))
+
+                b.style.top = top - speed + '%'
+
+                if (checkBall(b)) {
+                    b.remove()
+                    balls = balls.filter((v) => {
+                        return v !== b
+                    })
+
+                    burstCounter++
+
+                    burst.innerHTML = burstCounter.toString()
+                }
+
+                if (top - speed <= 0) {
+                    b.remove()
+                    balls = balls.filter((v) => {
+                        return v !== b
+                    })
+
+                    missedCounter++
+
+                    missed.innerHTML = missedCounter.toString()
+
+                    return
+                }
+
+                if (wind.direction === 'from-left') {
+                    if (left >= 90) return
+
+                    let newLeft = left + ((1 - left / 90) * (wind.speed / 100))
+                    if (newLeft > 90) newLeft = 90
+                    b.style.left = newLeft + '%'
+                } else if (wind.direction === 'from-right') {
+                    if (left <= 0) return
+
+                    let newLeft = left - ((left / 90) * wind.speed / 100)
+                    b.style.left = newLeft + '%'
+                }
+            })
+
+            setTimeout(() => {
+                animate()
+            }, 20)
+        }
+
+        // рандомный цвет для шарика
+        const getRandomColor = () => {
+            const r = Math.random()
+
+            if (r < .2) return 'red'
+            else if (r <= .4) return 'blue'
+            else if (r <= .6) return 'green'
+            else if (r <= .8) return 'pink'
+            else if (r <= 1) return 'black'
+        }
+
+        // рандомная позиция для шарика с учетом его ширины
+        const getRandomLeft = (max) => {
+            const r = Math.round(Math.random() * (100 - max))
+
+            return `${r}%`
+        }
+
+        // рандомная ширина шарика
+        const getRandomWidth = () => {
+            return Math.round(Math.random() * 10) + 3
+        }
+
+        // рекурсивный setTimout для создания новых шариков
+        const createBalls = () => {
+            if (sec === 0) return
+
+            const ball = document.createElement('div')
+            ball.innerHTML = strSvg
+            ball.className = 'ball'
+
+            let width = getRandomWidth()
+
+            ball.style.width = width + 'vw'
+            ball.style.top = '100%'
+            ball.style.left = getRandomLeft(width)
+            ball.classList.toggle(getRandomColor())
+
+            balls.push(ball)
+            place.append(ball)
+
+            createdBallsCounter++
+
+            if (createdBallsCounter === ballStep) {
+                createdBallsCounter = 0
+
+                wind = getRandomWind()
+                console.log(wind)
+                speed += speedStep
+                if (cdBall >= 1) cdBall -= cdBallStep
+            }
+
+            setTimeout(() => {
+                createBalls()
+            }, cdBall * 1000)
+        }
+
+        // Да, можно и без функции
+        const start = () => {
+            setTimeout(() => {
+                timer()
+
+                createBalls()
+
+                animate()
+            }, 1000)
+        };
+
+        start()
+    }
+
+    main()
+</script>
+</html>
